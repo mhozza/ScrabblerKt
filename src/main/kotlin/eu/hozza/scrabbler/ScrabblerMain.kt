@@ -2,7 +2,6 @@
 
 package eu.hozza.scrabbler
 
-//import eu.hozza.datastructures.tree.print
 import eu.hozza.datastructures.trie.Trie
 import eu.hozza.datastructures.trie.TrieNode
 import kotlinx.cli.*
@@ -126,7 +125,6 @@ fun answer(
                 result = words.subList(0, limit)
             }
         } else {
-            println(listOf(isFiltered, allowShorter, wildcard))
             result = findPermutations(
                 _word,
                 trie!!,
@@ -137,7 +135,7 @@ fun answer(
             )
         }
     }
-    println(result)
+    result.println()
 }
 
 fun main(args: Array<String>) {
@@ -172,4 +170,8 @@ fun String.sorted(): String {
 
 fun String?.toCounter(): Map<Char, Int> {
     return this?.groupingBy { it }?.eachCount() ?: mapOf()
+}
+
+fun List<Any>.println() {
+    this.forEach { println(it) }
 }
