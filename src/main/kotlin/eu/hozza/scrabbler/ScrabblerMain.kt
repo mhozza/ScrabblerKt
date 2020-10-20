@@ -5,9 +5,7 @@ package eu.hozza.scrabbler
 //import eu.hozza.datastructures.tree.print
 import eu.hozza.datastructures.trie.Trie
 import eu.hozza.datastructures.trie.TrieNode
-import kotlinx.cli.ArgParser
-import kotlinx.cli.ArgType
-import kotlinx.cli.required
+import kotlinx.cli.*
 import java.io.File
 
 fun buildTrie(words: List<String>): Trie {
@@ -99,22 +97,73 @@ fun findRegex(pattern: String, words: List<String>, limit: Int? = null): List<St
     val regex = Regex(pattern)
     // TODO: use sequence.
     val _words = words.filter { regex.matches(it) }
-    if (limit) {
+    if (limit != null) {
         return _words.subList(0, limit)
     }
-    return list(_words)
+    return _words
+}
+
+fun answer(
+    word: String,
+    trie: Trie?,
+    words: List<String>,
+    isFiltered: Boolean = false,
+    regex: Boolean = false,
+    limit: Int? = null,
+    allowShorter: Boolean = false,
+    wildcard: Char? = null,
+    prefix: String? = null
+) {
+    val _word = word.toLowerCase()
+    var result: List<String>
+    if (regex) {
+        result = findRegex(_word, words, limit = limit)
+    } else {
+        if (isFiltered && !allowShorter && wildcard == null) {
+            if (limit == null) {
+                result = words
+            } else {
+                result = words.subList(0, limit)
+            }
+        } else {
+            println(listOf(isFiltered, allowShorter, wildcard))
+            result = findPermutations(
+                _word,
+                trie!!,
+                prefix = prefix,
+                use_all_letters = !allowShorter,
+                wildcard = wildcard,
+                limit = limit,
+            )
+        }
+    }
+    println(result)
 }
 
 fun main(args: Array<String>) {
     val parser = ArgParser("playground")
+    val word by parser.argument(ArgType.String).optional()
     val dict by parser.option(ArgType.String, shortName = "d").required()
+    val limit by parser.option(ArgType.Int, shortName = "l")
+    val prefix by parser.option(ArgType.String)
+    val allowShorter by parser.option(ArgType.Boolean).default(false)
+//    val wildcard by parser.option(ArgType.String)
+    val wildcard: Char? = null
+    val regex by parser.option(ArgType.Boolean, shortName = "r").default(false)
     parser.parse(args)
 
-    val words = loadDictionary(dict)
-    println(words.size)
+    var words = loadDictionary(dict)
 
-    val trie = buildTrie(words)
-    println(trie.root.getChildren())
+    if (word != null) {
+        var trie: Trie? = null
+        if (!regex) {
+            words = filterDictionary(words, word!!, prefix = prefix, wildcard = wildcard, useAllLetters = !allowShorter)
+            if (allowShorter || wildcard != null) {
+                trie = buildTrie(words)
+            }
+        }
+        answer(word!!, trie, words, isFiltered = true, regex, limit, allowShorter, wildcard, prefix)
+    }
 }
 
 fun String.sorted(): String {
