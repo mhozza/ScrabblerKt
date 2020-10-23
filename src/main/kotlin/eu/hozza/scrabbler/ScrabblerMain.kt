@@ -30,23 +30,23 @@ fun filterDictionary(
 ): List<String> {
     val sortedLetters = letters.sorted()
     val letterSet = letters.toSet()
-    val numWilddcards = if (wildcard == null) 0 else letters.count { it == wildcard }
+    val numWildcards = if (wildcard == null) 0 else letters.count { it == wildcard }
 
     fun isValidWordWithoutPrefix(word: String): Boolean {
         if (word.length > letters.length) return false
         if (useAllLetters && word.length != letters.length) return false
-        if ((word.toSet() - letterSet).size > numWilddcards) return false
+        if ((word.toSet() - letterSet).size > numWildcards) return false
         if (wildcard == null && useAllLetters && word.sorted() != sortedLetters) return false
         return true
     }
 
     fun isValidWord(word: String): Boolean {
-        var _word = word
+        var word_ = word
         if (!prefix.isNullOrEmpty()) {
             if (!word.startsWith(prefix)) return false
-            _word = word.substring(prefix.length)
+            word_ = word.substring(prefix.length)
         }
-        return isValidWordWithoutPrefix(_word)
+        return isValidWordWithoutPrefix(word_)
     }
     return words.filter { isValidWord(it) }
 }
@@ -65,26 +65,30 @@ fun findPermutations(
     val letters = word.toCounter()
     val q = ArrayDeque(listOf(NodeInfo(root, "", letters)))
     val words = mutableListOf<String>()
-    var _limit = limit
+    var limit_ = limit
 
     while (q.isNotEmpty()) {
         val (node, w, l) = q.removeFirst()
-        val subNodes = if (wildcard == null || l[wildcard] == 0) {
-            node.getChildren().filter { (l[it.key] ?: 0) > 0 }.toSortedMap()
+        val subNodes = if (wildcard == null || l.getOrDefault(wildcard, 0) == 0) {
+            node.getChildren().filter { l.getOrDefault(it.key, 0) > 0 }.toSortedMap()
         } else {
             node.getChildren().toSortedMap()
         }
         for ((c, subNode) in subNodes) {
-            if (_limit == null || _limit > 0) {
+            if (limit_ == null || limit_ > 0) {
                 val newW = w + c
                 if ((!use_all_letters || newW.length == word.length) && subNode.isWord) {
                     words.add(newW)
-                    if (_limit != null) {
-                        _limit -= 1
+                    if (limit_ != null) {
+                        limit_ -= 1
                     }
                 }
-                val newL: Map<Char, Int> =
-                    if (l[c] ?: 0 > 0) l.filter { it.key != c } else l.filter { it.key != wildcard }
+                val newL: MutableMap<Char, Int> = HashMap(l)
+                if (newL.getOrDefault(c, 0) > 0) {
+                    newL[c] = newL[c]?.minus(1) ?: 0
+                } else if (wildcard != null){
+                    newL[wildcard] = newL[wildcard]?.minus(1) ?: 0
+                }
                 q.addLast(NodeInfo(subNode, newW, newL))
             }
         }
@@ -95,11 +99,11 @@ fun findPermutations(
 fun findRegex(pattern: String, words: List<String>, limit: Int? = null): List<String> {
     val regex = Regex(pattern)
     // TODO: use sequence.
-    val _words = words.filter { regex.matches(it) }
+    val words_ = words.filter { regex.matches(it) }
     if (limit != null) {
-        return _words.subList(0, limit)
+        return words_.subList(0, limit)
     }
-    return _words
+    return words_
 }
 
 fun answer(
@@ -113,10 +117,10 @@ fun answer(
     wildcard: Char? = null,
     prefix: String? = null
 ) {
-    val _word = word.toLowerCase()
+    val word_ = word.toLowerCase()
     var result: List<String>
     if (regex) {
-        result = findRegex(_word, words, limit = limit)
+        result = findRegex(word_, words, limit = limit)
     } else {
         if (isFiltered && !allowShorter && wildcard == null) {
             if (limit == null) {
@@ -126,7 +130,7 @@ fun answer(
             }
         } else {
             result = findPermutations(
-                _word,
+                word_,
                 trie!!,
                 prefix = prefix,
                 use_all_letters = !allowShorter,
@@ -138,16 +142,31 @@ fun answer(
     result.println()
 }
 
+/**
+ * Argument type for string values.
+ */
+object CharArg : ArgType<Char>(true) {
+    override val description: kotlin.String
+        get() = "{ Char }"
+
+    override fun convert(value: kotlin.String, name: kotlin.String): kotlin.Char {
+        check(value.length <= 1)
+        if (value == "")
+            return '?'
+        return value.first()
+    }
+}
+
+
 fun main(args: Array<String>) {
-    val parser = ArgParser("playground")
-    val word by parser.argument(ArgType.String).optional()
-    val dict by parser.option(ArgType.String, shortName = "d").required()
-    val limit by parser.option(ArgType.Int, shortName = "l")
-    val prefix by parser.option(ArgType.String)
-    val allowShorter by parser.option(ArgType.Boolean).default(false)
-//    val wildcard by parser.option(ArgType.String)
-    val wildcard: Char? = null
-    val regex by parser.option(ArgType.Boolean, shortName = "r").default(false)
+    val parser = ArgParser("Scrabbler")
+    val word by parser.argument(ArgType.String, description = "Input word").optional()
+    val dict by parser.option(ArgType.String, shortName = "d", description = "List of words to search in.").required()
+    val limit by parser.option(ArgType.Int, shortName = "l", description = "Limit the number of words printed.")
+    val prefix by parser.option(ArgType.String, description = "Only print words starting with the specified prefix.")
+    val allowShorter by parser.option(ArgType.Boolean, "Don't require using all letters.").default(false)
+    val wildcard by parser.option(CharArg, description = "Set a wildcard for the permutation matching.")
+    val regex by parser.option(ArgType.Boolean, shortName = "r", description =  "Print words matching regex.").default(false)
     parser.parse(args)
 
     var words = loadDictionary(dict)
