@@ -4,6 +4,8 @@ package eu.hozza.scrabbler
 
 import eu.hozza.datastructures.trie.Trie
 import eu.hozza.datastructures.trie.TrieNode
+import eu.hozza.datastructures.Counter
+import eu.hozza.datastructures.toCounter
 import kotlinx.cli.*
 import java.io.File
 
@@ -51,7 +53,7 @@ fun filterDictionary(
     return words.filter { isValidWord(it) }
 }
 
-private data class NodeInfo constructor(val node: TrieNode, val word: String, val letters: Map<Char, Int>)
+private data class NodeInfo constructor(val node: TrieNode, val word: String, val letters: Counter<Char>)
 
 fun findPermutations(
     word: String,
@@ -83,12 +85,12 @@ fun findPermutations(
                         limit_ -= 1
                     }
                 }
-                val newL: MutableMap<Char, Int> = HashMap(l)
-                if (newL.getOrDefault(c, 0) > 0) {
-                    newL[c] = newL[c]?.minus(1) ?: 0
-                } else if (wildcard != null){
-                    newL[wildcard] = newL[wildcard]?.minus(1) ?: 0
-                }
+                val newL: Counter<Char> =
+                    if (l.getOrDefault(c, 0) > 0) {
+                        l - Counter(c)
+                    } else {
+                        l - Counter(wildcard)
+                    }
                 q.addLast(NodeInfo(subNode, newW, newL))
             }
         }
@@ -166,7 +168,8 @@ fun main(args: Array<String>) {
     val prefix by parser.option(ArgType.String, description = "Only print words starting with the specified prefix.")
     val allowShorter by parser.option(ArgType.Boolean, "Don't require using all letters.").default(false)
     val wildcard by parser.option(CharArg, description = "Set a wildcard for the permutation matching.")
-    val regex by parser.option(ArgType.Boolean, shortName = "r", description =  "Print words matching regex.").default(false)
+    val regex by parser.option(ArgType.Boolean, shortName = "r", description = "Print words matching regex.")
+        .default(false)
     parser.parse(args)
 
     var words = loadDictionary(dict)
@@ -185,10 +188,6 @@ fun main(args: Array<String>) {
 
 fun String.sorted(): String {
     return toCharArray().sorted().joinToString("")
-}
-
-fun String?.toCounter(): Map<Char, Int> {
-    return this?.groupingBy { it }?.eachCount() ?: mapOf()
 }
 
 fun List<Any>.println() {
