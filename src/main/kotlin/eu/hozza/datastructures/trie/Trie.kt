@@ -19,6 +19,10 @@ class Trie(root: TrieNode) : Tree<Char, TrieNode> {
         node.isWord = true
         return node
     }
+
+    fun addAll(words: List<String>) {
+        words.forEach { add(it) }
+    }
 }
 
 fun Trie.find(word: String): Boolean {

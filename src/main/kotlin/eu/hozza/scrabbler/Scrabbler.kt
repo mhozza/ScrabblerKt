@@ -49,7 +49,6 @@ class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolea
         return wordsSequence.toList()
     }
 
-
     private fun Trie.findPermutations(
         word: String,
         prefix: String? = null,
