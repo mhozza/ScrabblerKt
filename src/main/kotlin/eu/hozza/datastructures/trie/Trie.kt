@@ -3,11 +3,13 @@ package eu.hozza.datastructures.trie
 import eu.hozza.datastructures.tree.BasicTreeNode
 import eu.hozza.datastructures.tree.Tree
 import eu.hozza.datastructures.tree.TreeNode
+import eu.hozza.datastructures.tree.getNode
 
 data class TrieNode constructor(var isWord: Boolean = false) : TreeNode<Char, TrieNode> by BasicTreeNode()
 
-class Trie : Tree<Char, TrieNode> {
-    override val root: TrieNode = TrieNode()
+class Trie(root: TrieNode) : Tree<Char, TrieNode> {
+    constructor() : this(TrieNode())
+    override val root: TrieNode = root
 
     fun add(word: String): TrieNode {
         var node = root
@@ -17,21 +19,12 @@ class Trie : Tree<Char, TrieNode> {
         node.isWord = true
         return node
     }
+}
 
-    fun getNode(word: String): TrieNode? {
-        var node: TrieNode? = root
-        for (c in word) {
-            node = node?.get(c)
-            if (node == null) break
-        }
-        return node
-    }
+fun Trie.find(word: String): Boolean {
+    return getNode(word)?.isWord ?: false
+}
 
-    fun find(word: String): Boolean {
-        return getNode(word)?.isWord ?: false
-    }
-
-    fun isPrefix(word: String): Boolean {
-        return getNode(word) != null
-    }
+fun Trie.isPrefix(word: String): Boolean {
+    return getNode(word) != null
 }

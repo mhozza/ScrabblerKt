@@ -3,9 +3,11 @@
 package eu.hozza.scrabbler
 
 import eu.hozza.datastructures.trie.Trie
-import eu.hozza.datastructures.trie.TrieNode
 import eu.hozza.datastructures.Counter
 import eu.hozza.datastructures.toCounter
+import eu.hozza.datastructures.tree.ActionOutcome
+import eu.hozza.datastructures.tree.bfs
+import eu.hozza.datastructures.tree.getNode
 import kotlinx.cli.*
 import java.io.File
 
@@ -53,59 +55,62 @@ fun filterDictionary(
     return words.filter { isValidWord(it) }
 }
 
-private data class NodeInfo constructor(val node: TrieNode, val word: String, val letters: Counter<Char>)
-
-fun findPermutations(
+fun Trie.findPermutations(
     word: String,
-    trie: Trie,
     prefix: String? = null,
     use_all_letters: Boolean = true,
     wildcard: Char? = null,
     limit: Int? = null,
 ): List<String> {
-    val root = (if (!prefix.isNullOrEmpty()) trie.getNode(prefix) else trie.root) ?: return listOf()
-    val letters = word.toCounter()
-    val q = ArrayDeque(listOf(NodeInfo(root, "", letters)))
-    val words = mutableListOf<String>()
-    var limit_ = limit
+    data class NodeInfo constructor(val word: String, val letters: Counter<Char>)
 
-    while (q.isNotEmpty()) {
-        val (node, w, l) = q.removeFirst()
-        val subNodes = if (wildcard == null || l.getOrDefault(wildcard, 0) == 0) {
-            node.getChildren().filter { l.getOrDefault(it.key, 0) > 0 }.toSortedMap()
-        } else {
-            node.getChildren().toSortedMap()
-        }
-        for ((c, subNode) in subNodes) {
-            if (limit_ == null || limit_ > 0) {
-                val newW = w + c
-                if ((!use_all_letters || newW.length == word.length) && subNode.isWord) {
-                    words.add(newW)
-                    if (limit_ != null) {
-                        limit_ -= 1
-                    }
-                }
-                val newL: Counter<Char> =
-                    if (l.getOrDefault(c, 0) > 0) {
-                        l - Counter(c)
+    val trie = if (!prefix.isNullOrEmpty()) Trie(getNode(prefix) ?: return emptyList()) else this
+    val letters = word.toCounter()
+    val words = mutableListOf<String>()
+    var remainingLimit = limit
+
+    trie.bfs(
+        rootNodeData = NodeInfo("", letters),
+        makeChildInfo = { c, _, nodeInfo ->
+            if ((nodeInfo == null) || ((wildcard == null || nodeInfo.letters.getOrDefault(
+                    wildcard,
+                    0
+                ) == 0) && nodeInfo.letters.getOrDefault(c, 0) <= 0)
+            ) {
+                null
+            } else {
+                NodeInfo(
+                    nodeInfo.word + c, if (nodeInfo.letters.getOrDefault(c, 0) > 0) {
+                        nodeInfo.letters - Counter(c)
                     } else {
-                        l - Counter(wildcard)
+                        nodeInfo.letters - Counter(wildcard)
                     }
-                q.addLast(NodeInfo(subNode, newW, newL))
+                )
             }
+        }) { _, node, nodeInfo ->
+        if (nodeInfo == null) {
+            ActionOutcome.SKIP
+        } else {
+            if ((!use_all_letters || nodeInfo.word.length == word.length) && node.isWord) {
+                words.add(nodeInfo.word)
+                if (remainingLimit != null) {
+                    remainingLimit -= 1
+                }
+            }
+            ActionOutcome.CONTINUE
         }
     }
+
     return if (!prefix.isNullOrEmpty()) words.map { "$prefix$it" } else words
 }
 
 fun findRegex(pattern: String, words: List<String>, limit: Int? = null): List<String> {
     val regex = Regex(pattern)
-    // TODO: use sequence.
-    val words_ = words.filter { regex.matches(it) }
+    val wordsSequence = words.asSequence().filter { regex.matches(it) }
     if (limit != null) {
-        return words_.subList(0, limit)
+        return wordsSequence.take(limit).toList()
     }
-    return words_
+    return wordsSequence.toList()
 }
 
 fun answer(
@@ -119,21 +124,20 @@ fun answer(
     wildcard: Char? = null,
     prefix: String? = null
 ) {
-    val word_ = word.toLowerCase()
-    var result: List<String>
+    val lowercaseWord = word.toLowerCase()
+    var result: List<String>?
     if (regex) {
-        result = findRegex(word_, words, limit = limit)
+        result = findRegex(lowercaseWord, words, limit = limit)
     } else {
         if (isFiltered && !allowShorter && wildcard == null) {
-            if (limit == null) {
-                result = words
+            result = if (limit == null) {
+                words
             } else {
-                result = words.subList(0, limit)
+                words.subList(0, limit)
             }
         } else {
-            result = findPermutations(
-                word_,
-                trie!!,
+            result = trie?.findPermutations(
+                lowercaseWord,
                 prefix = prefix,
                 use_all_letters = !allowShorter,
                 wildcard = wildcard,
@@ -190,6 +194,6 @@ fun String.sorted(): String {
     return toCharArray().sorted().joinToString("")
 }
 
-fun List<Any>.println() {
-    this.forEach { println(it) }
+fun List<Any>?.println() {
+    this?.forEach { println(it) }
 }
