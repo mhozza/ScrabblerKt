@@ -14,7 +14,7 @@ fun main(args: Array<String>) {
     val limit by parser.option(ArgType.Int, shortName = "l", description = "Limit the number of words printed.")
     val prefix by parser.option(ArgType.String, description = "Only print words starting with the specified prefix.")
     val allowShorter by parser.option(ArgType.Boolean, "Don't require using all letters.").default(false)
-    val wildcard by parser.option(CharArg, description = "Set a wildcard for the permutation matching.")
+    val wildcard by parser.option(CharArg, shortName = "w", description = "Set a wildcard for the permutation matching.").default('?')
     val regex by parser.option(ArgType.Boolean, shortName = "r", description = "Print words matching regex.")
         .default(false)
     parser.parse(args)
@@ -22,14 +22,15 @@ fun main(args: Array<String>) {
     var words = loadDictionary(dict)
 
     if (word != null) {
+        val _wildcard = if (word!!.contains(wildcard)) wildcard else null
         var trie: Trie? = null
         if (!regex) {
-            words = filterDictionary(words, word!!, prefix = prefix, wildcard = wildcard, useAllLetters = !allowShorter)
-            if (allowShorter || wildcard != null) {
+            words = filterDictionary(words, word!!, prefix = prefix, wildcard = _wildcard, useAllLetters = !allowShorter)
+            if (allowShorter || _wildcard != null) {
                 trie = buildTrie(words)
             }
         }
-        Scrabbler(words, trie, isFiltered = true).answer(word!!, regex, limit, allowShorter, wildcard, prefix)
+        Scrabbler(words, trie, isFiltered = true).answer(word!!, regex, limit, allowShorter, _wildcard, prefix)
     }
 }
 
