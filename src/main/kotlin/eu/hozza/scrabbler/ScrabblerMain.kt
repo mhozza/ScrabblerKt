@@ -31,6 +31,17 @@ fun main(args: Array<String>) {
             }
         }
         Scrabbler(words, trie, isFiltered = true).answer(word!!, regex, limit, allowShorter, _wildcard, prefix)
+    } else {
+        val trie = buildTrie(words)
+        val scrabbler = Scrabbler(words, trie, isFiltered = true)
+        while (true) {
+            print(">>> ")
+            val line = readLine()
+            if (line.isNullOrEmpty()) {
+                break
+            }
+            scrabbler.answer(line, regex, limit, allowShorter, wildcard, prefix)
+        }
     }
 }
 
