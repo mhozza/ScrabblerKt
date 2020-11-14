@@ -15,29 +15,29 @@ class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolea
         allowShorter: Boolean = false,
         wildcard: Char? = null,
         prefix: String? = null
-    ) {
+    ): List<String> {
         val lowercaseWord = word.toLowerCase()
-        var result: List<String>?
-        if (regex) {
-            result = words.filterByRegex(lowercaseWord, limit = limit)
-        } else {
-            if (isFiltered && !allowShorter && wildcard == null) {
-                result = if (limit == null) {
-                    words
-                } else {
-                    words.subList(0, limit)
-                }
+        val result: List<String> =
+            if (regex) {
+                words.filterByRegex(lowercaseWord, limit = limit)
             } else {
-                result = trie?.findPermutations(
-                    lowercaseWord,
-                    prefix = prefix,
-                    use_all_letters = !allowShorter,
-                    wildcard = wildcard,
-                    limit = limit,
-                )
+                if (isFiltered && !allowShorter && wildcard == null) {
+                    if (limit == null) {
+                        words
+                    } else {
+                        words.subList(0, limit)
+                    }
+                } else {
+                    trie?.findPermutations(
+                        lowercaseWord,
+                        prefix = prefix,
+                        use_all_letters = !allowShorter,
+                        wildcard = wildcard,
+                        limit = limit,
+                    ) ?: listOf()
+                }
             }
-        }
-        result.println()
+        return result
     }
 
     private fun List<String>.filterByRegex(pattern: String, limit: Int? = null): List<String> {
@@ -98,7 +98,4 @@ class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolea
         return if (!prefix.isNullOrEmpty()) words.map { "$prefix$it" } else words
     }
 
-    private fun List<Any>?.println() {
-        this?.forEach { println(it) }
-    }
 }

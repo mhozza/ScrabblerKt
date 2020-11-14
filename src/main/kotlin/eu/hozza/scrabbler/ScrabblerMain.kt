@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
                 trie = buildTrie(words)
             }
         }
-        Scrabbler(words, trie, isFiltered = true).answer(word!!, regex, limit, allowShorter, _wildcard, prefix)
+        Scrabbler(words, trie, isFiltered = true).answer(word!!, regex, limit, allowShorter, _wildcard, prefix).println()
     } else {
         val trie = buildTrie(words)
         val scrabbler = Scrabbler(words, trie, isFiltered = true)
@@ -41,8 +41,12 @@ fun main(args: Array<String>) {
             if (line.isNullOrEmpty()) {
                 break
             }
-            scrabbler.answer(line, regex, limit, allowShorter, wildcard, prefix)
+            scrabbler.answer(line, regex, limit, allowShorter, wildcard, prefix).println()
         }
     }
 }
 
+
+private fun List<Any>?.println() {
+    this?.forEach { println(it) }
+}
