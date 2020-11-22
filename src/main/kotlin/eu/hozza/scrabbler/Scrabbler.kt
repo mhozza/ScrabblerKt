@@ -6,6 +6,8 @@ import eu.hozza.datastructures.tree.ActionOutcome
 import eu.hozza.datastructures.tree.bfs
 import eu.hozza.datastructures.tree.getNode
 import eu.hozza.datastructures.trie.Trie
+import eu.hozza.string.times
+import java.lang.Integer.min
 
 class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolean = false) {
     fun answer(
@@ -14,18 +16,26 @@ class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolea
         limit: Int? = null,
         allowShorter: Boolean = false,
         wildcard: Char? = null,
-        prefix: String? = null
+        prefix: String? = null,
+        multipleWords: Boolean = false,
     ): List<String> {
         val lowercaseWord = word.toLowerCase()
-        val result: List<String> =
-            if (regex) {
-                words.filterByRegex(lowercaseWord, limit = limit)
+        return if (regex) {
+            words.filterByRegex(lowercaseWord, limit = limit)
+        } else {
+            if (multipleWords) {
+                trie?.findPermutationMultiWord(
+                    lowercaseWord,
+                    use_all_letters = !allowShorter,
+                    wildcard = wildcard,
+                    limit = limit,
+                )?.map { wordList -> wordList.joinToString(separator = " ") { it } } ?: listOf()
             } else {
                 if (isFiltered && !allowShorter && wildcard == null) {
                     if (limit == null) {
                         words
                     } else {
-                        words.subList(0, limit)
+                        words.subList(0, min(limit, words.size))
                     }
                 } else {
                     trie?.findPermutations(
@@ -37,7 +47,7 @@ class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolea
                     ) ?: listOf()
                 }
             }
-        return result
+        }
     }
 
     private fun List<String>.filterByRegex(pattern: String, limit: Int? = null): List<String> {
@@ -96,6 +106,65 @@ class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolea
         }
 
         return if (!prefix.isNullOrEmpty()) words.map { "$prefix$it" } else words
+    }
+
+    private data class PartialSentenceNode(
+        val words: Counter<String>,
+        val remainingLetters: Counter<Char>,
+    )
+
+    private fun Trie.findPermutationMultiWord(
+        letters: String,
+        use_all_letters: Boolean = true,
+        wildcard: Char? = null,
+        limit: Int? = null,
+    ): List<List<String>> {
+        val possibleWords =
+            this.findPermutations(letters, prefix = null, use_all_letters = false, wildcard = wildcard)
+        val letterCounter = letters.toCounter()
+
+        val sentenceNodeMap = mutableMapOf<PartialSentenceNode, PartialSentenceNode>()
+
+        val q = ArrayDeque(possibleWords.map {
+            PartialSentenceNode(Counter(it), letterCounter - it.toCounter())
+        })
+
+        var currentLimit = limit
+        val sentences = mutableListOf<List<String>>()
+
+        while (q.isNotEmpty()) {
+            val partialSentenceNode = q.removeFirst()
+            if (partialSentenceNode in sentenceNodeMap) {
+                continue
+            }
+
+            val nextWords = this.findPermutations(partialSentenceNode.remainingLetters.entries.joinToString {
+                it.key * it.value
+            }, prefix = null, use_all_letters = false, wildcard = wildcard)
+
+            // Mark as final.
+            if (nextWords.isEmpty() && (partialSentenceNode.remainingLetters.isEmpty() || !use_all_letters)) {
+                sentences.add(partialSentenceNode.words.entries.flatMap { entry -> List(entry.value) { entry.key } })
+                if (currentLimit != null) {
+                    currentLimit -= 1
+                    if (currentLimit <= 0) {
+                        return sentences
+                    }
+                }
+                continue
+            }
+            for (word in nextWords) {
+                val node = PartialSentenceNode(
+                    partialSentenceNode.words + Counter(word),
+                    partialSentenceNode.remainingLetters - word.toCounter()
+                )
+
+                q.addLast(node)
+                sentenceNodeMap[partialSentenceNode] = node
+            }
+        }
+
+        return sentences
     }
 
 }

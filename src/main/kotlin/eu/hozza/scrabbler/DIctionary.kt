@@ -20,7 +20,8 @@ fun filterDictionary(
     letters: String,
     wildcard: Char? = null,
     useAllLetters: Boolean = true,
-    prefix: String? = null
+    prefix: String? = null,
+    multipleWords: Boolean = false,
 ): List<String> {
     val sortedLetters = letters.sorted()
     val letterSet = letters.toSet()
@@ -28,9 +29,10 @@ fun filterDictionary(
 
     fun isValidWordWithoutPrefix(word: String): Boolean {
         if (word.length > letters.length) return false
-        if (useAllLetters && word.length != letters.length) return false
+        if (!multipleWords && useAllLetters && word.length != letters.length) return false
+        //TODO: This can be optimized even more using counter.
         if ((word.toSet() - letterSet).size > numWildcards) return false
-        if (wildcard == null && useAllLetters && word.sorted() != sortedLetters) return false
+        if (wildcard == null && useAllLetters && !multipleWords && word.sorted() != sortedLetters) return false
         return true
     }
 

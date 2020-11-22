@@ -36,9 +36,14 @@ class Counter<T> : HashMap<T, Int> {
         return this.getOrDefault(key, 0)
     }
 
+    override fun isEmpty(): Boolean {
+        return super.isEmpty() || this.values.all { it == 0 }
+    }
+
     companion object {
         fun fromCharSequence(charSequence: CharSequence): Counter<Char> = Counter(charSequence.asIterable())
     }
 }
 
 fun CharSequence.toCounter() = Counter.fromCharSequence(this)
+
