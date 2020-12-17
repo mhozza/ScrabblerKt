@@ -9,7 +9,7 @@ object CharArg : ArgType<Char>(true) {
     override val description: kotlin.String
         get() = "{ Char }"
 
-    override fun convert(value: kotlin.String, name: kotlin.String): kotlin.Char {
+    override fun convert(value: kotlin.String, name: kotlin.String): Char {
         check(value.length <= 1)
         if (value == "")
             return '?'
