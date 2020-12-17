@@ -23,7 +23,7 @@ class Counter<T> : HashMap<T, Int> {
         other.forEach {
             this[it.key] = this.getOrDefault(it.key, 0) - it.value
         }
-        this.filter { it.value <= 0 }.forEach {this.remove(it) }
+        this.filter { it.value <= 0 }.forEach {this.remove(it.key) }
     }
 
     operator fun minus(other: Counter<T>) : Counter<T> {

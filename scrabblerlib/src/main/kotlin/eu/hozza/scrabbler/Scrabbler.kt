@@ -9,7 +9,7 @@ import eu.hozza.datastructures.trie.Trie
 import eu.hozza.string.times
 import java.lang.Integer.min
 
-class Scrabbler(val words: List<String>, val trie: Trie?, val isFiltered: Boolean = false) {
+class Scrabbler(private val words: List<String>, private val trie: Trie?, private val isFiltered: Boolean = false) {
     fun answer(
         word: String,
         regex: Boolean = false,

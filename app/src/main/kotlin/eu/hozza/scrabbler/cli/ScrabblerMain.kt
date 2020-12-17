@@ -1,12 +1,14 @@
 @file:Suppress("WarningOnMainUnusedParameterMigration")
 
-package eu.hozza.scrabbler
+package eu.hozza.scrabbler.cli
 
-import eu.hozza.datastructures.trie.Trie
 import eu.hozza.cli.CharArg
+import eu.hozza.datastructures.trie.Trie
+import eu.hozza.scrabbler.Scrabbler
+import eu.hozza.scrabbler.buildTrie
+import eu.hozza.scrabbler.filterDictionary
+import eu.hozza.scrabbler.loadDictionary
 import kotlinx.cli.*
-import java.io.File
-import eu.hozza.string.*
 
 fun main(args: Array<String>) {
     val parser = ArgParser("Scrabbler")
