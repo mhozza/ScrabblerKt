@@ -121,9 +121,12 @@ class Scrabbler(private val words: List<String>, private val trie: Trie?, privat
     ): List<List<String>> {
         val possibleWords =
             this.findPermutations(letters, prefix = null, use_all_letters = false, wildcard = wildcard)
+
+        println("Number of possible words: ${possibleWords.size}")
+
         val letterCounter = letters.toCounter()
 
-        val sentenceNodeMap = mutableMapOf<PartialSentenceNode, PartialSentenceNode>()
+        val sentenceNodeSet = mutableSetOf<Int>()
 
         val q = ArrayDeque(possibleWords.map {
             PartialSentenceNode(Counter(it), letterCounter - it.toCounter())
@@ -134,9 +137,10 @@ class Scrabbler(private val words: List<String>, private val trie: Trie?, privat
 
         while (q.isNotEmpty()) {
             val partialSentenceNode = q.removeFirst()
-            if (partialSentenceNode in sentenceNodeMap) {
+            if (partialSentenceNode.hashCode() in sentenceNodeSet) {
                 continue
             }
+            sentenceNodeSet.add(partialSentenceNode.hashCode())
 
             val nextWords = this.findPermutations(partialSentenceNode.remainingLetters.entries.joinToString {
                 it.key * it.value
@@ -158,9 +162,8 @@ class Scrabbler(private val words: List<String>, private val trie: Trie?, privat
                     partialSentenceNode.words + Counter(word),
                     partialSentenceNode.remainingLetters - word.toCounter()
                 )
-
+                // TODO: adding it to beginning will significantly reduce memory footprint, but will not order by sentence length.
                 q.addLast(node)
-                sentenceNodeMap[partialSentenceNode] = node
             }
         }
 
