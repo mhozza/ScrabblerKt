@@ -99,6 +99,9 @@ class Scrabbler(private val words: List<String>, private val trie: Trie?, privat
                     words.add(nodeInfo.word)
                     if (remainingLimit != null) {
                         remainingLimit -= 1
+                        if (remainingLimit <= 0) {
+                            return@bfs ActionOutcome.HALT
+                        }
                     }
                 }
                 ActionOutcome.CONTINUE

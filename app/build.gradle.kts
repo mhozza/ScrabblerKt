@@ -19,3 +19,16 @@ dependencies {
 application {
     mainClass.set("eu.hozza.scrabbler.cli.ScrabblerMainKt")
 }
+
+tasks.jar {
+    manifest {
+        attributes(
+            mapOf(
+                "Main-Class" to "eu.hozza.scrabbler.cli.ScrabblerMainKt",
+                "Implementation-Title" to project.name,
+                "Implementation-Version" to project.version
+            )
+        )
+    }
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+}
