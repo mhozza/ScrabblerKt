@@ -1,9 +1,9 @@
-package eu.hozza.datastructures.trie
+package com.mhozza.datastructures.trie
 
-import eu.hozza.datastructures.tree.BasicTreeNode
-import eu.hozza.datastructures.tree.Tree
-import eu.hozza.datastructures.tree.TreeNode
-import eu.hozza.datastructures.tree.getNode
+import com.mhozza.datastructures.tree.BasicTreeNode
+import com.mhozza.datastructures.tree.Tree
+import com.mhozza.datastructures.tree.TreeNode
+import com.mhozza.datastructures.tree.getNode
 
 data class TrieNode constructor(var isWord: Boolean = false) : TreeNode<Char, TrieNode> by BasicTreeNode()
 

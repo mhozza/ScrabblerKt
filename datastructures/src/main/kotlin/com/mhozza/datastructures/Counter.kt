@@ -1,4 +1,4 @@
-package eu.hozza.datastructures
+package com.mhozza.datastructures
 
 class Counter<T> : HashMap<T, Int> {
     constructor(iterable: Iterable<T>) {

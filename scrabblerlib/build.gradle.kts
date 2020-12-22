@@ -2,7 +2,7 @@ plugins {
     id("scrabbler.kotlin-library-conventions")
 }
 
-group = "eu.hozza.scrabbler"
+group = "com.mhozza.scrabbler"
 
 dependencies {
     implementation(project(":datastructures"))

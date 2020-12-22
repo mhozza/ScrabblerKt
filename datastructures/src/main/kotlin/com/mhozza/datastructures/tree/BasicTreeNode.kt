@@ -1,4 +1,4 @@
-package eu.hozza.datastructures.tree
+package com.mhozza.datastructures.tree
 
 import java.util.*
 

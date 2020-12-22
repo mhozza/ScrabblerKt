@@ -2,7 +2,7 @@ plugins {
     id("scrabbler.kotlin-library-conventions")
 }
 
-group = "eu.hozza.cli"
+group = "com.mhozza.cli"
 
 repositories {
   maven { url = uri("https://kotlin.bintray.com/kotlinx") }

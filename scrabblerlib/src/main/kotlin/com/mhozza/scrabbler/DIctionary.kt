@@ -1,6 +1,6 @@
-package eu.hozza.scrabbler
+package com.mhozza.scrabbler
 
-import eu.hozza.datastructures.trie.Trie
+import com.mhozza.datastructures.trie.Trie
 import eu.hozza.string.sorted
 import java.io.File
 

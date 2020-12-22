@@ -2,7 +2,7 @@ plugins {
     id("scrabbler.kotlin-application-conventions")
 }
 
-group = "eu.hozza.scrabbler.cli"
+group = "com.mhozza.scrabbler.cli"
 
 repositories {
     mavenCentral()
@@ -17,5 +17,5 @@ dependencies {
 }
 
 application {
-    mainClass.set("eu.hozza.scrabbler.cli.ScrabblerMainKt")
+    mainClass.set("com.mhozza.scrabbler.cli.ScrabblerMainKt")
 }

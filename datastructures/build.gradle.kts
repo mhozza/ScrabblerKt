@@ -4,4 +4,4 @@ plugins {
     id("scrabbler.kotlin-library-conventions")
 }
 
-group = "eu.hozza.datastructures"
+group = "com.mhozza.datastructures"

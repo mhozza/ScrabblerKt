@@ -1,4 +1,4 @@
-package eu.hozza.cli
+package com.mhozza.cli
 
 import kotlinx.cli.ArgType
 

@@ -1,11 +1,11 @@
-package eu.hozza.scrabbler
+package com.mhozza.scrabbler
 
-import eu.hozza.datastructures.Counter
-import eu.hozza.datastructures.toCounter
-import eu.hozza.datastructures.tree.ActionOutcome
-import eu.hozza.datastructures.tree.bfs
-import eu.hozza.datastructures.tree.getNode
-import eu.hozza.datastructures.trie.Trie
+import com.mhozza.datastructures.Counter
+import com.mhozza.datastructures.toCounter
+import com.mhozza.datastructures.tree.ActionOutcome
+import com.mhozza.datastructures.tree.bfs
+import com.mhozza.datastructures.tree.getNode
+import com.mhozza.datastructures.trie.Trie
 import eu.hozza.string.times
 import java.lang.Integer.min
 

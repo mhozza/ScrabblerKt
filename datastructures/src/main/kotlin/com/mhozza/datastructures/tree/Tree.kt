@@ -1,4 +1,4 @@
-package eu.hozza.datastructures.tree
+package com.mhozza.datastructures.tree
 
 interface Tree<K, V : TreeNode<K, V>> {
     val root: V
