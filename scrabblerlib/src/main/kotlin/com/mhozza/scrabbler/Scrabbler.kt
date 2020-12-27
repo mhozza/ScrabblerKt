@@ -11,52 +11,54 @@ import eu.hozza.string.times
 import java.lang.Integer.min
 
 class Scrabbler(private val dictionary: List<String>) {
-    fun answer(
+    fun findPermutations(
         word: String,
-        regex: Boolean = false,
         limit: Int? = null,
-        allowShorter: Boolean = false,
-        wildcard: Char? = null,
+        useAllLetters: Boolean = true,
+        wildcard: Char = '?',
         prefix: String? = null,
         multipleWords: Boolean = false,
     ): List<String> {
         val lowercaseWord = word.toLowerCase()
-        return if (regex) {
-            dictionary.filterByRegex(lowercaseWord, limit = limit)
+
+        @Suppress("NAME_SHADOWING")
+        val wildcard = if (word.contains(wildcard)) wildcard else null
+
+        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, multipleWords)
+        val trie = if (!useAllLetters || wildcard != null || multipleWords) {
+            buildTrie(filteredDictionary)
         } else {
-            val filteredDictionary = filterDictionary(dictionary, word, wildcard, !allowShorter, prefix, multipleWords)
+            null
+        }
 
-            val trie = if (allowShorter || wildcard != null || multipleWords) {
-                buildTrie(filteredDictionary)
+        return if (multipleWords) {
+            trie?.findPermutationMultiWord(
+                lowercaseWord,
+                useAllLetters = useAllLetters,
+                wildcard = wildcard,
+                limit = limit,
+            )?.map { wordList -> wordList.joinToString(separator = " ") { it } } ?: listOf()
+        } else {
+            if (useAllLetters && wildcard == null) {
+                if (limit == null) {
+                    filteredDictionary
+                } else {
+                    filteredDictionary.subList(0, min(limit, filteredDictionary.size))
+                }
             } else {
-                null
-            }
-
-            if (multipleWords) {
-                trie?.findPermutationMultiWord(
+                trie?.findPermutations(
                     lowercaseWord,
-                    use_all_letters = !allowShorter,
+                    prefix = prefix,
+                    useAllLetters = useAllLetters,
                     wildcard = wildcard,
                     limit = limit,
-                )?.map { wordList -> wordList.joinToString(separator = " ") { it } } ?: listOf()
-            } else {
-                if (!allowShorter && wildcard == null) {
-                    if (limit == null) {
-                        filteredDictionary
-                    } else {
-                        filteredDictionary.subList(0, min(limit, filteredDictionary.size))
-                    }
-                } else {
-                    trie?.findPermutations(
-                        lowercaseWord,
-                        prefix = prefix,
-                        use_all_letters = !allowShorter,
-                        wildcard = wildcard,
-                        limit = limit,
-                    ) ?: listOf()
-                }
+                ) ?: listOf()
             }
         }
+    }
+
+    fun findByRegex(word: String, limit: Int? = null): List<String> {
+        return dictionary.filterByRegex(word.toLowerCase(), limit = limit)
     }
 
     private fun List<String>.filterByRegex(pattern: String, limit: Int? = null): List<String> {
@@ -71,7 +73,7 @@ class Scrabbler(private val dictionary: List<String>) {
     private fun Trie.findPermutations(
         word: String,
         prefix: String? = null,
-        use_all_letters: Boolean = true,
+        useAllLetters: Boolean = true,
         wildcard: Char? = null,
         limit: Int? = null,
     ): List<String> {
@@ -104,7 +106,7 @@ class Scrabbler(private val dictionary: List<String>) {
             if (nodeInfo == null) {
                 ActionOutcome.SKIP
             } else {
-                if ((!use_all_letters || nodeInfo.word.length == word.length) && node.isWord) {
+                if ((!useAllLetters || nodeInfo.word.length == word.length) && node.isWord) {
                     words.add(nodeInfo.word)
                     if (remainingLimit != null) {
                         remainingLimit -= 1
@@ -127,12 +129,12 @@ class Scrabbler(private val dictionary: List<String>) {
 
     private fun Trie.findPermutationMultiWord(
         letters: String,
-        use_all_letters: Boolean = true,
+        useAllLetters: Boolean = true,
         wildcard: Char? = null,
         limit: Int? = null,
     ): List<List<String>> {
         val possibleWords =
-            this.findPermutations(letters, prefix = null, use_all_letters = false, wildcard = wildcard)
+            this.findPermutations(letters, prefix = null, useAllLetters = false, wildcard = wildcard)
 
         println("Number of possible words: ${possibleWords.size}")
 
@@ -156,10 +158,10 @@ class Scrabbler(private val dictionary: List<String>) {
 
             val nextWords = this.findPermutations(partialSentenceNode.remainingLetters.entries.joinToString {
                 it.key * it.value
-            }, prefix = null, use_all_letters = false, wildcard = wildcard)
+            }, prefix = null, useAllLetters = false, wildcard = wildcard)
 
             // Mark as final.
-            if (nextWords.isEmpty() && (partialSentenceNode.remainingLetters.isEmpty() || !use_all_letters)) {
+            if (nextWords.isEmpty() && (partialSentenceNode.remainingLetters.isEmpty() || !useAllLetters)) {
                 sentences.add(partialSentenceNode.words.entries.flatMap { entry -> List(entry.value) { entry.key } })
                 if (currentLimit != null) {
                     currentLimit -= 1
@@ -210,12 +212,13 @@ class Scrabbler(private val dictionary: List<String>) {
         }
 
         fun isValidWord(word: String): Boolean {
-            var word_ = word
+            @Suppress("NAME_SHADOWING")
+            var word = word
             if (!prefix.isNullOrEmpty()) {
                 if (!word.startsWith(prefix)) return false
-                word_ = word.substring(prefix.length)
+                word = word.substring(prefix.length)
             }
-            return isValidWordWithoutPrefix(word_)
+            return isValidWordWithoutPrefix(word)
         }
         return words.filter { isValidWord(it) }
     }
