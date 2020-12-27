@@ -27,17 +27,12 @@ fun main(args: Array<String>) {
 
     if (word != null) {
         val _wildcard = if (word!!.contains(wildcard)) wildcard else null
-        var trie: Trie? = null
         if (!regex) {
             words = filterDictionary(words, word!!, prefix = prefix, wildcard = _wildcard, useAllLetters = !allowShorter, multipleWords = multipleWords)
-            if (allowShorter || _wildcard != null || multipleWords) {
-                trie = buildTrie(words)
-            }
         }
-        Scrabbler(words, trie, isFiltered = true).answer(word!!, regex, limit, allowShorter, _wildcard, prefix, multipleWords).println()
+        Scrabbler(words).answer(word!!, regex, limit, allowShorter, _wildcard, prefix, multipleWords).println()
     } else {
-        val trie = buildTrie(words)
-        val scrabbler = Scrabbler(words, trie, isFiltered = true)
+        val scrabbler = Scrabbler(words)
         while (true) {
             print(">>> ")
             val line = readLine()

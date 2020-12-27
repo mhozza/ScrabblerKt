@@ -6,10 +6,11 @@ import com.mhozza.datastructures.tree.ActionOutcome
 import com.mhozza.datastructures.tree.bfs
 import com.mhozza.datastructures.tree.getNode
 import com.mhozza.datastructures.trie.Trie
+import eu.hozza.string.sorted
 import eu.hozza.string.times
 import java.lang.Integer.min
 
-class Scrabbler(private val words: List<String>, private val trie: Trie?, private val isFiltered: Boolean = false) {
+class Scrabbler(private val dictionary: List<String>) {
     fun answer(
         word: String,
         regex: Boolean = false,
@@ -21,8 +22,16 @@ class Scrabbler(private val words: List<String>, private val trie: Trie?, privat
     ): List<String> {
         val lowercaseWord = word.toLowerCase()
         return if (regex) {
-            words.filterByRegex(lowercaseWord, limit = limit)
+            dictionary.filterByRegex(lowercaseWord, limit = limit)
         } else {
+            val filteredDictionary = filterDictionary(dictionary, word, wildcard, !allowShorter, prefix, multipleWords)
+
+            val trie = if (allowShorter || wildcard != null || multipleWords) {
+                buildTrie(filteredDictionary)
+            } else {
+                null
+            }
+
             if (multipleWords) {
                 trie?.findPermutationMultiWord(
                     lowercaseWord,
@@ -31,11 +40,11 @@ class Scrabbler(private val words: List<String>, private val trie: Trie?, privat
                     limit = limit,
                 )?.map { wordList -> wordList.joinToString(separator = " ") { it } } ?: listOf()
             } else {
-                if (isFiltered && !allowShorter && wildcard == null) {
+                if (!allowShorter && wildcard == null) {
                     if (limit == null) {
-                        words
+                        filteredDictionary
                     } else {
-                        words.subList(0, min(limit, words.size))
+                        filteredDictionary.subList(0, min(limit, filteredDictionary.size))
                     }
                 } else {
                     trie?.findPermutations(
@@ -172,5 +181,44 @@ class Scrabbler(private val words: List<String>, private val trie: Trie?, privat
 
         return sentences
     }
+
+    private fun buildTrie(words: List<String>): Trie {
+        val trie = Trie()
+        trie.addAll(words)
+        return trie
+    }
+
+    private fun filterDictionary(
+        words: List<String>,
+        letters: String,
+        wildcard: Char? = null,
+        useAllLetters: Boolean = true,
+        prefix: String? = null,
+        multipleWords: Boolean = false,
+    ): List<String> {
+        val sortedLetters = letters.sorted()
+        val letterSet = letters.toSet()
+        val numWildcards = if (wildcard == null) 0 else letters.count { it == wildcard }
+
+        fun isValidWordWithoutPrefix(word: String): Boolean {
+            if (word.length > letters.length) return false
+            if (!multipleWords && useAllLetters && word.length != letters.length) return false
+            //TODO: This can be optimized even more using counter.
+            if ((word.toSet() - letterSet).size > numWildcards) return false
+            if (wildcard == null && useAllLetters && !multipleWords && word.sorted() != sortedLetters) return false
+            return true
+        }
+
+        fun isValidWord(word: String): Boolean {
+            var word_ = word
+            if (!prefix.isNullOrEmpty()) {
+                if (!word.startsWith(prefix)) return false
+                word_ = word.substring(prefix.length)
+            }
+            return isValidWordWithoutPrefix(word_)
+        }
+        return words.filter { isValidWord(it) }
+    }
+
 
 }
