@@ -19,7 +19,7 @@ class Trie(override val root: TrieNode) : Tree<Char, TrieNode> {
         return node
     }
 
-    fun addAll(words: List<String>) {
+    fun addAll(words: Iterable<String>) {
         words.forEach { add(it) }
     }
 }

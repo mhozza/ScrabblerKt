@@ -3,7 +3,7 @@ package com.mhozza.scrabbler
 import java.io.*
 import java.util.*
 
-data class Dictionary(val dictionary: Map<String, Int>) {
+data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) {
     enum class Format {
         AUTO,
         TXT,
@@ -60,7 +60,7 @@ data class Dictionary(val dictionary: Map<String, Int>) {
                         }
                     }
                 }.toMap()
-                return Dictionary(dictionary)
+                return Dictionary(dictionary, format == Format.CSV)
             }
         }
 

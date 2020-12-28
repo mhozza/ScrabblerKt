@@ -18,15 +18,16 @@ class Scrabbler(private val dictionary: Dictionary) {
         wildcard: Char = '?',
         prefix: String? = null,
         multipleWords: Boolean = false,
+        smartSort: Boolean = true,
     ): List<String> {
         val lowercaseWord = word.toLowerCase()
 
         @Suppress("NAME_SHADOWING")
         val wildcard = if (word.contains(wildcard)) wildcard else null
 
-        val filteredDictionary = filterDictionary(dictionary.dictionary.keys, word, wildcard, useAllLetters, prefix, multipleWords)
+        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, multipleWords)
         val trie = if (!useAllLetters || wildcard != null || multipleWords) {
-            buildTrie(filteredDictionary)
+            buildTrie(filteredDictionary.dictionary.keys)
         } else {
             null
         }
@@ -40,19 +41,30 @@ class Scrabbler(private val dictionary: Dictionary) {
             )?.map { wordList -> wordList.joinToString(separator = " ") { it } } ?: listOf()
         } else {
             if (useAllLetters && wildcard == null) {
-                if (limit == null) {
-                    filteredDictionary
+                var words = if (smartSort) {
+                    filteredDictionary.dictionary.toList().sortedByDescending { it.second }.map { it.first }
                 } else {
-                    filteredDictionary.subList(0, min(limit, filteredDictionary.size))
+                    filteredDictionary.dictionary.toList().map { it.first }
                 }
+                if (limit != null) {
+                    words = words.subList(0, min(limit, words.size))
+                }
+                words
             } else {
-                trie?.findPermutations(
+                var words = trie?.findPermutations(
                     lowercaseWord,
                     prefix = prefix,
                     useAllLetters = useAllLetters,
                     wildcard = wildcard,
-                    limit = limit,
+                    limit = if (smartSort) null else limit,
                 ) ?: listOf()
+                if (smartSort) {
+                    words = words.sortedByDescending { dictionary.dictionary[it] }
+                    if (limit != null) {
+                        words = words.subList(0, min(limit, words.size))
+                    }
+                }
+                words
             }
         }
     }
@@ -184,20 +196,20 @@ class Scrabbler(private val dictionary: Dictionary) {
         return sentences
     }
 
-    private fun buildTrie(words: List<String>): Trie {
+    private fun buildTrie(words: Iterable<String>): Trie {
         val trie = Trie()
         trie.addAll(words)
         return trie
     }
 
     private fun filterDictionary(
-        words: Set<String>,
+        dictionary: Dictionary,
         letters: String,
         wildcard: Char? = null,
         useAllLetters: Boolean = true,
         prefix: String? = null,
         multipleWords: Boolean = false,
-    ): List<String> {
+    ): Dictionary {
         val sortedLetters = letters.sorted()
         val letterSet = letters.toSet()
         val numWildcards = if (wildcard == null) 0 else letters.count { it == wildcard }
@@ -220,7 +232,7 @@ class Scrabbler(private val dictionary: Dictionary) {
             }
             return isValidWordWithoutPrefix(word)
         }
-        return words.filter { isValidWord(it) }
+        return dictionary.copy(dictionary = dictionary.dictionary.filter { isValidWord(it.key) } )
     }
 
 
