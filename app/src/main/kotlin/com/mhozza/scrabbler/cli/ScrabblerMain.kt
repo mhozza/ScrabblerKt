@@ -15,6 +15,7 @@ fun main(args: Array<String>) {
     val prefix by parser.option(ArgType.String, description = "Only print words starting with the specified prefix.")
     val allowShorter by parser.option(ArgType.Boolean, description = "Don't require using all letters.").default(false)
     val sortAlphabetically by parser.option(ArgType.Boolean, description = "Sort words alphabetically.").default(false)
+    val removeAccents by parser.option(ArgType.Boolean, description = "Remove accents from dictionary.").default(false)
     val wildcard by parser.option(
         CharArg,
         shortName = "w",
@@ -25,7 +26,7 @@ fun main(args: Array<String>) {
     val multipleWords by parser.option(ArgType.Boolean, description = "Allow multiple words.").default(false)
     parser.parse(args)
 
-    val dictionary = Dictionary.load(dict)
+    val dictionary = if (removeAccents) Dictionary.load(dict).removeAccents() else Dictionary.load(dict)
 
     if (word != null) {
         if (regex) {

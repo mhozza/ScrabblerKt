@@ -1,6 +1,7 @@
 package com.mhozza.scrabbler
 
 import java.io.*
+import org.apache.commons.lang3.StringUtils
 import java.util.*
 
 data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) {
@@ -8,6 +9,14 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
         AUTO,
         TXT,
         CSV,
+    }
+
+    fun removeAccents(): Dictionary {
+        return copy(dictionary = dictionary
+            .map { StringUtils.stripAccents(it.key) to it.value }
+            .groupBy({ it.first }) { it.second }
+            .map { it.key to it.value.sum() }
+            .toMap())
     }
 
     companion object {
