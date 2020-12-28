@@ -10,7 +10,7 @@ import eu.hozza.string.sorted
 import eu.hozza.string.times
 import java.lang.Integer.min
 
-class Scrabbler(private val dictionary: List<String>) {
+class Scrabbler(private val dictionary: Dictionary) {
     fun findPermutations(
         word: String,
         limit: Int? = null,
@@ -24,7 +24,7 @@ class Scrabbler(private val dictionary: List<String>) {
         @Suppress("NAME_SHADOWING")
         val wildcard = if (word.contains(wildcard)) wildcard else null
 
-        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, multipleWords)
+        val filteredDictionary = filterDictionary(dictionary.dictionary.keys, word, wildcard, useAllLetters, prefix, multipleWords)
         val trie = if (!useAllLetters || wildcard != null || multipleWords) {
             buildTrie(filteredDictionary)
         } else {
@@ -58,16 +58,16 @@ class Scrabbler(private val dictionary: List<String>) {
     }
 
     fun findByRegex(word: String, limit: Int? = null): List<String> {
-        return dictionary.filterByRegex(word.toLowerCase(), limit = limit)
+        return dictionary.dictionary.keys.filterByRegex(word.toLowerCase(), limit = limit).toList()
     }
 
-    private fun List<String>.filterByRegex(pattern: String, limit: Int? = null): List<String> {
+    private fun Set<String>.filterByRegex(pattern: String, limit: Int? = null): Set<String> {
         val regex = Regex(pattern)
         val wordsSequence = this.asSequence().filter { regex.matches(it) }
         if (limit != null) {
-            return wordsSequence.take(limit).toList()
+            return wordsSequence.take(limit).toSet()
         }
-        return wordsSequence.toList()
+        return wordsSequence.toSet()
     }
 
     private fun Trie.findPermutations(
@@ -191,7 +191,7 @@ class Scrabbler(private val dictionary: List<String>) {
     }
 
     private fun filterDictionary(
-        words: List<String>,
+        words: Set<String>,
         letters: String,
         wildcard: Char? = null,
         useAllLetters: Boolean = true,

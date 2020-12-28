@@ -3,8 +3,8 @@
 package com.mhozza.scrabbler.cli
 
 import com.mhozza.cli.CharArg
+import com.mhozza.scrabbler.Dictionary
 import com.mhozza.scrabbler.Scrabbler
-import com.mhozza.scrabbler.loadDictionary
 import kotlinx.cli.*
 
 fun main(args: Array<String>) {
@@ -24,16 +24,16 @@ fun main(args: Array<String>) {
     val multipleWords by parser.option(ArgType.Boolean, description = "Allow multiple words.").default(false)
     parser.parse(args)
 
-    val words = loadDictionary(dict)
+    val dictionary = Dictionary.load(dict)
 
     if (word != null) {
         if (regex) {
-            Scrabbler(words).findByRegex(word!!, limit).println()
+            Scrabbler(dictionary).findByRegex(word!!, limit).println()
         } else {
-            Scrabbler(words).findPermutations(word!!, limit, !allowShorter, wildcard, prefix, multipleWords).println()
+            Scrabbler(dictionary).findPermutations(word!!, limit, !allowShorter, wildcard, prefix, multipleWords).println()
         }
     } else {
-        val scrabbler = Scrabbler(words)
+        val scrabbler = Scrabbler(dictionary)
         while (true) {
             print(">>> ")
             val line = readLine()
