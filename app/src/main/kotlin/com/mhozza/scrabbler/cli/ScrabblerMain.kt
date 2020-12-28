@@ -27,10 +27,13 @@ fun main(args: Array<String>) {
     parser.parse(args)
 
     val dictionary = if (removeAccents) Dictionary.load(dict).removeAccents() else Dictionary.load(dict)
+    val scrabbler = Scrabbler(dictionary)
 
     if (word != null) {
         if (regex) {
-            Scrabbler(dictionary).findByRegex(word!!, limit).println()
+            scrabbler.findByRegex(word!!, limit, smartSort = !sortAlphabetically).println()
+        } else if (multipleWords) {
+            scrabbler.findPermutationsMultiWord(word!!, limit, !allowShorter, wildcard)
         } else {
             Scrabbler(dictionary).findPermutations(
                 word!!,
@@ -38,12 +41,10 @@ fun main(args: Array<String>) {
                 !allowShorter,
                 wildcard,
                 prefix,
-                multipleWords,
                 smartSort = !sortAlphabetically
             ).println()
         }
     } else {
-        val scrabbler = Scrabbler(dictionary)
         while (true) {
             print(">>> ")
             val line = readLine()
@@ -51,9 +52,16 @@ fun main(args: Array<String>) {
                 break
             }
             if (regex) {
-                scrabbler.findByRegex(line, limit).println()
+                scrabbler.findByRegex(line, limit, smartSort = !sortAlphabetically).println()
             } else {
-                scrabbler.findPermutations(line, limit, !allowShorter, wildcard, prefix, multipleWords).println()
+                scrabbler.findPermutations(
+                    line,
+                    limit,
+                    !allowShorter,
+                    wildcard,
+                    prefix,
+                    smartSort = !sortAlphabetically
+                ).println()
             }
         }
     }

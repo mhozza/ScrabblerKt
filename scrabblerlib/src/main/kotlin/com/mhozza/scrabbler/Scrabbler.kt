@@ -17,7 +17,6 @@ class Scrabbler(private val dictionary: Dictionary) {
         useAllLetters: Boolean = true,
         wildcard: Char = '?',
         prefix: String? = null,
-        multipleWords: Boolean = false,
         smartSort: Boolean = true,
     ): List<String> {
         val lowercaseWord = word.toLowerCase()
@@ -25,48 +24,63 @@ class Scrabbler(private val dictionary: Dictionary) {
         @Suppress("NAME_SHADOWING")
         val wildcard = if (word.contains(wildcard)) wildcard else null
 
-        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, multipleWords)
-        val trie = if (!useAllLetters || wildcard != null || multipleWords) {
+        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, false)
+        val trie = if (!useAllLetters || wildcard != null) {
             buildTrie(filteredDictionary.dictionary.keys)
         } else {
             null
         }
 
-        return if (multipleWords) {
-            trie?.findPermutationMultiWord(
+        return if (useAllLetters && wildcard == null) {
+            var words = if (smartSort) {
+                filteredDictionary.dictionary.toList().sortedByDescending { it.second }.map { it.first }
+            } else {
+                filteredDictionary.dictionary.toList().map { it.first }
+            }
+            if (limit != null) {
+                words = words.subList(0, min(limit, words.size))
+            }
+            words
+        } else {
+            var words = trie?.findPermutations(
                 lowercaseWord,
+                prefix = prefix,
                 useAllLetters = useAllLetters,
                 wildcard = wildcard,
-                limit = limit,
-            )?.map { wordList -> wordList.joinToString(separator = " ") { it } } ?: listOf()
-        } else {
-            if (useAllLetters && wildcard == null) {
-                var words = if (smartSort) {
-                    filteredDictionary.dictionary.toList().sortedByDescending { it.second }.map { it.first }
-                } else {
-                    filteredDictionary.dictionary.toList().map { it.first }
-                }
+                limit = if (smartSort) null else limit,
+            ) ?: listOf()
+            if (smartSort) {
+                words = words.sortedByDescending { dictionary.dictionary[it] }
                 if (limit != null) {
                     words = words.subList(0, min(limit, words.size))
                 }
-                words
-            } else {
-                var words = trie?.findPermutations(
-                    lowercaseWord,
-                    prefix = prefix,
-                    useAllLetters = useAllLetters,
-                    wildcard = wildcard,
-                    limit = if (smartSort) null else limit,
-                ) ?: listOf()
-                if (smartSort) {
-                    words = words.sortedByDescending { dictionary.dictionary[it] }
-                    if (limit != null) {
-                        words = words.subList(0, min(limit, words.size))
-                    }
-                }
-                words
             }
+            words
         }
+
+    }
+
+    fun findPermutationsMultiWord(
+        word: String,
+        limit: Int? = null,
+        useAllLetters: Boolean = true,
+        wildcard: Char = '?',
+    ): List<String> {
+        val lowercaseWord = word.toLowerCase()
+
+        @Suppress("NAME_SHADOWING")
+        val wildcard = if (word.contains(wildcard)) wildcard else null
+
+        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, null, true)
+
+        val trie = buildTrie(filteredDictionary.dictionary.keys)
+
+        return trie.findPermutationMultiWord(
+            lowercaseWord,
+            useAllLetters = useAllLetters,
+            wildcard = wildcard,
+            limit = limit,
+        ).map { wordList -> wordList.joinToString(separator = " ") { it } }
     }
 
     fun findByRegex(word: String, limit: Int? = null, smartSort: Boolean = true): List<String> {
@@ -231,7 +245,7 @@ class Scrabbler(private val dictionary: Dictionary) {
             }
             return isValidWordWithoutPrefix(word)
         }
-        return dictionary.copy(dictionary = dictionary.dictionary.filter { isValidWord(it.key) } )
+        return dictionary.copy(dictionary = dictionary.dictionary.filter { isValidWord(it.key) })
     }
 
 
