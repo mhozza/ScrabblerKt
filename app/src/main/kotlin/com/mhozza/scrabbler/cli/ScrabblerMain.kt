@@ -14,6 +14,7 @@ fun main(args: Array<String>) {
     val limit by parser.option(ArgType.Int, shortName = "l", description = "Limit the number of words printed.")
     val prefix by parser.option(ArgType.String, description = "Only print words starting with the specified prefix.")
     val allowShorter by parser.option(ArgType.Boolean, description = "Don't require using all letters.").default(false)
+    val sortAlphabetically by parser.option(ArgType.Boolean, description = "Sort words alphabetically.").default(false)
     val wildcard by parser.option(
         CharArg,
         shortName = "w",
@@ -30,7 +31,7 @@ fun main(args: Array<String>) {
         if (regex) {
             Scrabbler(dictionary).findByRegex(word!!, limit).println()
         } else {
-            Scrabbler(dictionary).findPermutations(word!!, limit, !allowShorter, wildcard, prefix, multipleWords).println()
+            Scrabbler(dictionary).findPermutations(word!!, limit, !allowShorter, wildcard, prefix, multipleWords, smartSort = !sortAlphabetically).println()
         }
     } else {
         val scrabbler = Scrabbler(dictionary)

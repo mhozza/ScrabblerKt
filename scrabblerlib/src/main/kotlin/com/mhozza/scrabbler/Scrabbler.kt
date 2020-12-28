@@ -69,17 +69,16 @@ class Scrabbler(private val dictionary: Dictionary) {
         }
     }
 
-    fun findByRegex(word: String, limit: Int? = null): List<String> {
-        return dictionary.dictionary.keys.filterByRegex(word.toLowerCase(), limit = limit).toList()
-    }
-
-    private fun Set<String>.filterByRegex(pattern: String, limit: Int? = null): Set<String> {
-        val regex = Regex(pattern)
-        val wordsSequence = this.asSequence().filter { regex.matches(it) }
-        if (limit != null) {
-            return wordsSequence.take(limit).toSet()
+    fun findByRegex(word: String, limit: Int? = null, smartSort: Boolean = true): List<String> {
+        val regex = Regex(word.toLowerCase())
+        var dictionaryItems = dictionary.dictionary.filter { regex.matches(it.key) }.toList()
+        if (smartSort) {
+            dictionaryItems = dictionaryItems.sortedByDescending { it.second }
         }
-        return wordsSequence.toSet()
+        if (limit != null) {
+            dictionaryItems = dictionaryItems.subList(0, min(limit, dictionaryItems.size))
+        }
+        return dictionaryItems.map { it.first }
     }
 
     private fun Trie.findPermutations(
