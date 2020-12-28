@@ -31,7 +31,15 @@ fun main(args: Array<String>) {
         if (regex) {
             Scrabbler(dictionary).findByRegex(word!!, limit).println()
         } else {
-            Scrabbler(dictionary).findPermutations(word!!, limit, !allowShorter, wildcard, prefix, multipleWords, smartSort = !sortAlphabetically).println()
+            Scrabbler(dictionary).findPermutations(
+                word!!,
+                limit,
+                !allowShorter,
+                wildcard,
+                prefix,
+                multipleWords,
+                smartSort = !sortAlphabetically
+            ).println()
         }
     } else {
         val scrabbler = Scrabbler(dictionary)
