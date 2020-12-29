@@ -12,11 +12,13 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
     }
 
     fun removeAccents(): Dictionary {
-        return copy(dictionary = dictionary
-            .map { StringUtils.stripAccents(it.key) to it.value }
-            .groupBy({ it.first }) { it.second }
-            .map { it.key to it.value.sum() }
-            .toMap())
+        val dictionaryWithoutAccents = HashMap<String, Int>()
+        for ((word, count) in dictionary) {
+            val wordWithoutAccents = StringUtils.stripAccents(word)
+            dictionaryWithoutAccents[wordWithoutAccents] = dictionaryWithoutAccents[wordWithoutAccents] ?: 0 + count
+        }
+
+        return copy(dictionary = dictionaryWithoutAccents)
     }
 
     companion object {
