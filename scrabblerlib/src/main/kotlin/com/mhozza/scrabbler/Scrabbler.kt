@@ -15,7 +15,7 @@ class Scrabbler(private val dictionary: Dictionary) {
         word: String,
         limit: Int? = null,
         useAllLetters: Boolean = true,
-        wildcard: Char = '?',
+        wildcard: Char? = '?',
         prefix: String? = null,
         suffix: String? = null,
         contains: String? = null,
@@ -25,7 +25,7 @@ class Scrabbler(private val dictionary: Dictionary) {
         val lowercaseWord = word.toLowerCase()
 
         @Suppress("NAME_SHADOWING")
-        val wildcard = if (word.contains(wildcard)) wildcard else null
+        val wildcard = if (wildcard!= null &&  word.contains(wildcard)) wildcard else null
 
         val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, suffix, contains, regexFilter, false)
         val trie = if (!useAllLetters || wildcard != null) {
@@ -68,12 +68,12 @@ class Scrabbler(private val dictionary: Dictionary) {
         word: String,
         limit: Int? = null,
         useAllLetters: Boolean = true,
-        wildcard: Char = '?',
+        wildcard: Char? = '?',
     ): List<String> {
         val lowercaseWord = word.toLowerCase()
 
         @Suppress("NAME_SHADOWING")
-        val wildcard = if (word.contains(wildcard)) wildcard else null
+        val wildcard = if (wildcard != null && word.contains(wildcard)) wildcard else null
 
         val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, multipleWords = true)
 
