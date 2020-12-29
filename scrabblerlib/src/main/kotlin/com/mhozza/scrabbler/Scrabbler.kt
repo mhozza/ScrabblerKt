@@ -17,6 +17,9 @@ class Scrabbler(private val dictionary: Dictionary) {
         useAllLetters: Boolean = true,
         wildcard: Char = '?',
         prefix: String? = null,
+        suffix: String? = null,
+        contains: String? = null,
+        regexFilter: String? = null,
         smartSort: Boolean = true,
     ): List<String> {
         val lowercaseWord = word.toLowerCase()
@@ -24,7 +27,7 @@ class Scrabbler(private val dictionary: Dictionary) {
         @Suppress("NAME_SHADOWING")
         val wildcard = if (word.contains(wildcard)) wildcard else null
 
-        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, false)
+        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, prefix, suffix, contains, regexFilter, false)
         val trie = if (!useAllLetters || wildcard != null) {
             buildTrie(filteredDictionary.dictionary.keys)
         } else {
@@ -72,7 +75,7 @@ class Scrabbler(private val dictionary: Dictionary) {
         @Suppress("NAME_SHADOWING")
         val wildcard = if (word.contains(wildcard)) wildcard else null
 
-        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, null, true)
+        val filteredDictionary = filterDictionary(dictionary, word, wildcard, useAllLetters, multipleWords = true)
 
         val trie = buildTrie(filteredDictionary.dictionary.keys)
 
@@ -224,11 +227,17 @@ class Scrabbler(private val dictionary: Dictionary) {
         wildcard: Char? = null,
         useAllLetters: Boolean = true,
         prefix: String? = null,
+        suffix: String? = null,
+        contains: String? = null,
+        regexFilter: String? = null,
         multipleWords: Boolean = false,
     ): Dictionary {
         val sortedLetters = letters.sorted()
         val letterSet = letters.toSet()
         val numWildcards = if (wildcard == null) 0 else letters.count { it == wildcard }
+
+        @Suppress("NAME_SHADOWING")
+        val regexFilter = if (regexFilter == null) null else  Regex(regexFilter)
 
         fun isValidWordWithoutPrefix(word: String): Boolean {
             if (word.length > letters.length) return false
@@ -246,6 +255,10 @@ class Scrabbler(private val dictionary: Dictionary) {
                 if (!word.startsWith(prefix)) return false
                 word = word.substring(prefix.length)
             }
+            if (!suffix.isNullOrEmpty() && !word.endsWith(suffix)) return false
+            if (!contains.isNullOrEmpty() && !word.contains(contains)) return false
+            if (regexFilter != null && !regexFilter.matches(word)) return false
+
             return isValidWordWithoutPrefix(word)
         }
         return dictionary.copy(dictionary = dictionary.dictionary.filter { isValidWord(it.key) })

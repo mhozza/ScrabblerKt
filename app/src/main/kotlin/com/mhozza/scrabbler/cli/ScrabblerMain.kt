@@ -13,6 +13,9 @@ fun main(args: Array<String>) {
     val dict by parser.option(ArgType.String, shortName = "d", description = "List of words to search in.").required()
     val limit by parser.option(ArgType.Int, shortName = "l", description = "Limit the number of words printed.")
     val prefix by parser.option(ArgType.String, description = "Only print words starting with the specified prefix.")
+    val suffix by parser.option(ArgType.String, description = "Only print words ending with the specified suffix.")
+    val contains by parser.option(ArgType.String, description = "Only print words containing the specified string.")
+    val filter by parser.option(ArgType.String, description = "Only print words matching specified regex.")
     val allowShorter by parser.option(ArgType.Boolean, description = "Don't require using all letters.").default(false)
     val sortAlphabetically by parser.option(ArgType.Boolean, description = "Sort words alphabetically.").default(false)
     val removeAccents by parser.option(ArgType.Boolean, description = "Remove accents from dictionary.").default(false)
@@ -30,19 +33,26 @@ fun main(args: Array<String>) {
     val scrabbler = Scrabbler(dictionary)
 
     if (word != null) {
-        if (regex) {
-            scrabbler.findByRegex(word!!, limit, smartSort = !sortAlphabetically).println()
-        } else if (multipleWords) {
-            scrabbler.findPermutationsMultiWord(word!!, limit, !allowShorter, wildcard)
-        } else {
-            Scrabbler(dictionary).findPermutations(
-                word!!,
-                limit,
-                !allowShorter,
-                wildcard,
-                prefix,
-                smartSort = !sortAlphabetically
-            ).println()
+        when {
+            regex -> {
+                scrabbler.findByRegex(word!!, limit, smartSort = !sortAlphabetically).println()
+            }
+            multipleWords -> {
+                scrabbler.findPermutationsMultiWord(word!!, limit, !allowShorter, wildcard)
+            }
+            else -> {
+                Scrabbler(dictionary).findPermutations(
+                    word!!,
+                    limit,
+                    !allowShorter,
+                    wildcard,
+                    prefix,
+                    suffix,
+                    contains,
+                    filter,
+                    smartSort = !sortAlphabetically,
+                ).println()
+            }
         }
     } else {
         while (true) {
