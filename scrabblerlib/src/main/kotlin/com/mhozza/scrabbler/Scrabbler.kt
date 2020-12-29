@@ -35,7 +35,7 @@ class Scrabbler(private val dictionary: Dictionary) {
             var words = if (smartSort) {
                 filteredDictionary.dictionary.toList().sortedByDescending { it.second }.map { it.first }
             } else {
-                filteredDictionary.dictionary.toList().map { it.first }
+                filteredDictionary.dictionary.toList().sortedBy { it.first }.map { it.first }
             }
             if (limit != null) {
                 words = words.subList(0, min(limit, words.size))
@@ -48,6 +48,7 @@ class Scrabbler(private val dictionary: Dictionary) {
                 useAllLetters = useAllLetters,
                 wildcard = wildcard,
                 limit = if (smartSort) null else limit,
+                sort = !smartSort
             ) ?: listOf()
             if (smartSort) {
                 words = words.sortedByDescending { dictionary.dictionary[it] }
@@ -101,6 +102,7 @@ class Scrabbler(private val dictionary: Dictionary) {
         useAllLetters: Boolean = true,
         wildcard: Char? = null,
         limit: Int? = null,
+        sort: Boolean = true,
     ): List<String> {
         data class NodeInfo constructor(val word: String, val letters: Counter<Char>)
 
@@ -111,6 +113,7 @@ class Scrabbler(private val dictionary: Dictionary) {
 
         trie.bfs(
             rootNodeData = NodeInfo("", letters),
+            sort = sort,
             makeChildInfo = { c, _, nodeInfo ->
                 if ((nodeInfo == null) || ((wildcard == null || nodeInfo.letters.getOrDefault(
                         wildcard,
