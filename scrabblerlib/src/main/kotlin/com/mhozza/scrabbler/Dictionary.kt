@@ -1,8 +1,9 @@
 package com.mhozza.scrabbler
 
-import java.io.*
 import org.apache.commons.lang3.StringUtils
+import java.io.*
 import java.util.*
+import java.util.zip.GZIPInputStream
 
 data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) {
     enum class Format {
@@ -26,12 +27,26 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
         private const val COUNT_COLUMN_NAME = "Count"
         private const val DELIMITER = ","
 
-        fun load(fname: String): Dictionary {
-            return load(FileInputStream(File(fname)))
+        fun load(fname: String, compressed: Boolean? = null): Dictionary {
+            return load(FileInputStream(File(fname)), compressed = compressed ?: fname.endsWith(".gz"))
         }
 
-        fun load(inputStream: InputStream, format: Format = Format.AUTO): Dictionary {
-            @Suppress("NAME_SHADOWING") var format = format
+        fun load(
+            inputStream: InputStream,
+            format: Format = Format.AUTO,
+            compressed: Boolean = false,
+        ): Dictionary {
+            @Suppress("NAME_SHADOWING")
+            val inputStream =
+                if (compressed) {
+                    GZIPInputStream(inputStream)
+                } else {
+                    inputStream
+                }
+
+            @Suppress("NAME_SHADOWING")
+            var format = format
+
             BufferedReader(
                 InputStreamReader(inputStream)
             ).use {
