@@ -1,6 +1,5 @@
 package com.mhozza.scrabbler
 
-import org.apache.commons.lang3.StringUtils
 import java.io.*
 import java.util.*
 import java.util.zip.GZIPInputStream
@@ -67,7 +66,7 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
                     if (header == null) {
                         var word = line.trim().toLowerCase(Locale.getDefault())
                         if (removeAccents) {
-                            word = StringUtils.stripAccents(word)
+                            word = foldToASCII(word)
                         }
                         dictionary[word] = 1
                     } else {
@@ -75,7 +74,7 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
                         var word =
                             lineParts[header[WORD_COLUMN_NAME]!!].trim().toLowerCase(Locale.getDefault())
                         if (removeAccents) {
-                            word = StringUtils.stripAccents(word)
+                            word = foldToASCII(word)
                         }
                         val count = lineParts[header[COUNT_COLUMN_NAME]!!].toInt()
                         dictionary[word] = (dictionary[word] ?: 0) + count
