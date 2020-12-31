@@ -29,7 +29,7 @@ fun main(args: Array<String>) {
     val multipleWords by parser.option(ArgType.Boolean, description = "Allow multiple words.").default(false)
     parser.parse(args)
 
-    val dictionary = if (removeAccents) Dictionary.load(dict).removeAccents() else Dictionary.load(dict)
+    val dictionary = Dictionary.load(dict, removeAccents = removeAccents)
     val scrabbler = Scrabbler(dictionary)
 
     if (word != null) {
@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
                 scrabbler.findByRegex(word!!, limit, smartSort = !sortAlphabetically).println()
             }
             multipleWords -> {
-                scrabbler.findPermutationsMultiWord(word!!, limit, !allowShorter, wildcard)
+                scrabbler.findPermutationsMultiWord(word!!, limit, !allowShorter, wildcard).println()
             }
             else -> {
                 Scrabbler(dictionary).findPermutations(

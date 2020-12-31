@@ -12,29 +12,24 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
         CSV,
     }
 
-    fun removeAccents(): Dictionary {
-        val dictionaryWithoutAccents = HashMap<String, Int>()
-        for ((word, count) in dictionary) {
-            val wordWithoutAccents = StringUtils.stripAccents(word)
-            dictionaryWithoutAccents[wordWithoutAccents] = dictionaryWithoutAccents[wordWithoutAccents] ?: 0 + count
-        }
-
-        return copy(dictionary = dictionaryWithoutAccents)
-    }
-
     companion object {
         private const val WORD_COLUMN_NAME = "Word"
         private const val COUNT_COLUMN_NAME = "Count"
         private const val DELIMITER = ","
 
-        fun load(fname: String, compressed: Boolean? = null): Dictionary {
-            return load(FileInputStream(File(fname)), compressed = compressed ?: fname.endsWith(".gz"))
+        fun load(fname: String, compressed: Boolean? = null, removeAccents: Boolean = false): Dictionary {
+            return load(
+                FileInputStream(File(fname)),
+                compressed = compressed ?: fname.endsWith(".gz"),
+                removeAccents = removeAccents,
+            )
         }
 
         fun load(
             inputStream: InputStream,
             format: Format = Format.AUTO,
             compressed: Boolean = false,
+            removeAccents: Boolean = false,
         ): Dictionary {
             @Suppress("NAME_SHADOWING")
             val inputStream =
@@ -52,10 +47,10 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
             ).use {
                 var firstLine = true
                 var header: Map<String, Int>? = null
+                val dictionary = HashMap<String, Int>()
 
-                val dictionary = generateSequence {
-                    var line = it.readLine()
-                    if (firstLine && line != null) {
+                for (line in generateSequence { it.readLine() }) {
+                    if (firstLine) {
                         firstLine = false
                         if (format == Format.AUTO || format == Format.CSV) {
                             if (format == Format.AUTO) {
@@ -63,29 +58,29 @@ data class Dictionary(val dictionary: Map<String, Int>, val hasCounts: Boolean) 
                             }
                             if (format == Format.CSV) {
                                 header = getHeader(line)
-                                check(isValidHeader(header!!))
+                                check(isValidHeader(header))
                                 // Read next line since the first one is a header.
-                                line = it.readLine()
+                                continue
                             }
                         }
-
                     }
-                    if (line == null) {
-                        null
-                    } else {
-                        if (header == null) {
-                            val word = line.trim().toLowerCase(Locale.getDefault())
-                            val count = 1
-                            word to count
-                        } else {
-                            val lineParts = line.split(DELIMITER)
-                            val word =
-                                lineParts[header!![WORD_COLUMN_NAME]!!].trim().toLowerCase(Locale.getDefault())
-                            val count = lineParts[header!![COUNT_COLUMN_NAME]!!].toInt()
-                            word to count
+                    if (header == null) {
+                        var word = line.trim().toLowerCase(Locale.getDefault())
+                        if (removeAccents) {
+                            word = StringUtils.stripAccents(word)
                         }
+                        dictionary[word] = 1
+                    } else {
+                        val lineParts = line.split(DELIMITER)
+                        var word =
+                            lineParts[header[WORD_COLUMN_NAME]!!].trim().toLowerCase(Locale.getDefault())
+                        if (removeAccents) {
+                            word = StringUtils.stripAccents(word)
+                        }
+                        val count = lineParts[header[COUNT_COLUMN_NAME]!!].toInt()
+                        dictionary[word] = (dictionary[word] ?: 0) + count
                     }
-                }.toMap()
+                }
                 return Dictionary(dictionary, format == Format.CSV)
             }
         }
